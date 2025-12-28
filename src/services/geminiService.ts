@@ -72,7 +72,7 @@ export const generateRecipe = async (
   sourceType: Recipe['sourceType'],
   imageBase64?: string
 ): Promise<Recipe> => {
-  const modelId = "gemini-1.5-flash"; // Stabiles Modell für Production
+  const modelId = "gemini-1.5-flash-001"; // Stabiles Modell für Production
   let finalPrompt = "";
 
   // Prompt-Logik basierend auf Source-Type

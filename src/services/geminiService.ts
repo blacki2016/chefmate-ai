@@ -1,10 +1,10 @@
 // Nur zum Debuggen kurz einfügen, danach wieder löschen!
-console.log("CHECKING KEY:", import.meta.env.VITE_GEMINI_API_KEY ? "Key ist vorhanden" : "Key fehlt");
 import { GoogleGenAI, Type, Schema } from "@google/genai";
 import { Recipe, RecipeVersions } from "../types";
 import { v4 as uuidv4 } from 'uuid';
 
 const currentKey = (import.meta as any)?.env?.VITE_GEMINI_API_KEY as string | undefined;
+console.log("CHECKING KEY:", currentKey ? "Key ist vorhanden" : "Key fehlt");
 if (currentKey) console.log("Aktueller Key:", currentKey);
 
 // Vite exposes only env vars prefixed with VITE_ to client-side code.

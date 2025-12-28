@@ -21,11 +21,28 @@ export const generateRecipe = async (
     });
 
     if (!res.ok) {
-        const text = await res.text();
-        throw new Error(text || 'Fehler beim Anfragen der API');
+        // Try to parse error response as JSON
+        let errorMessage = `API Error ${res.status}`;
+        try {
+            const errorData = await res.json();
+            errorMessage = errorData.error || errorMessage;
+        } catch {
+            // Fallback: plain text or generic message
+            const text = await res.text();
+            if (text) {
+                errorMessage = text.substring(0, 200); // Limit length
+            }
+        }
+        throw new Error(errorMessage);
     }
 
     const data = await res.json();
+
+    // Validate response structure
+    if (!data.recipe) {
+        throw new Error("Invalid API response: missing 'recipe' field");
+    }
+
     callbacks.onUpdate?.("");
     return data.recipe as Recipe;
 };

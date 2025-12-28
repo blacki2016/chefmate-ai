@@ -1,0 +1,17 @@
+{
+    "buildCommand": "npm run build",
+    "devCommand": "vite",
+    "env": {
+        "GEMINI_API_KEY": "@gemini-api-key"
+    },
+    "routes": [
+        {
+            "src": "/api/(.*)",
+            "dest": "/api/$1"
+        },
+        {
+            "src": "/(.*)",
+            "dest": "/index.html"
+        }
+    ]
+}

@@ -131,6 +131,15 @@ function normalizeRecipeResponse(data) {
 }
 
 export default async function handler(req, res) {
+    // Allow CORS for local Vite dev (localhost:5173)
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    if (req.method === 'OPTIONS') {
+        res.status(200).end();
+        return;
+    }
+
     if (req.method !== "POST") {
         res.status(405).json({ error: "Method not allowed" });
         return;
@@ -139,7 +148,8 @@ export default async function handler(req, res) {
     try {
         const apiKey = process.env.GEMINI_API_KEY;
         if (!apiKey) {
-            res.status(500).json({ error: "Missing GEMINI_API_KEY" });
+            console.error("GEMINI_API_KEY not set in environment");
+            res.status(500).json({ error: "API key not configured. Check Vercel Environment Variables." });
             return;
         }
 
@@ -155,8 +165,12 @@ export default async function handler(req, res) {
         });
 
         const { prompt, sourceType, imageBase64 } = req.body || {};
-        if (!prompt || !sourceType) {
-            res.status(400).json({ error: "Missing prompt or sourceType" });
+        if (!prompt) {
+            res.status(400).json({ error: "Missing 'prompt' in request body" });
+            return;
+        }
+        if (!sourceType) {
+            res.status(400).json({ error: "Missing 'sourceType' in request body (expect 'pantry', 'scan', or 'text')" });
             return;
         }
 
@@ -190,6 +204,7 @@ export default async function handler(req, res) {
         };
 
         res.status(200).json({ recipe });
+        return;
     } catch (error) {
         console.error("/api/generate error:", error);
         res.status(500).json({ error: String(error?.message || error) });

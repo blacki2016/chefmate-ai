@@ -2,6 +2,9 @@ import { GoogleGenAI, Type, Schema } from "@google/genai";
 import { Recipe, RecipeVersions } from "../types";
 import { v4 as uuidv4 } from 'uuid';
 
+const currentKey = (import.meta as any)?.env?.VITE_GEMINI_API_KEY as string | undefined;
+if (currentKey) console.log("Aktueller Key:", currentKey);
+
 // Vite exposes only env vars prefixed with VITE_ to client-side code.
 // Keep initialization lazy so the app doesn't crash on startup if the key is missing.
 const getGeminiClient = () => {

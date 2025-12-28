@@ -24,7 +24,8 @@ const ingredientSchema: Schema = {
     unit: { type: Type.STRING },
     category: { type: Type.STRING, description: "Kategorie wie Gemüse, Milchprodukte, Fleisch, Vorrat, Gewürze" },
   },
-  required: ["item", "amount", "unit", "category"],
+  // category ist im TS-Type optional; wir normalisieren es nach dem Parse.
+  required: ["item", "amount", "unit"],
 };
 
 const versionSchema: Schema = {
@@ -62,7 +63,9 @@ export const generateRecipe = async (
   sourceType: Recipe['sourceType'],
   imageBase64?: string
 ): Promise<Recipe> => {
-  const modelId = "gemini-3-flash-preview";
+  // Preview-Modelle sind je nach Key/Region nicht immer freigeschaltet.
+  // Für Local Testing nehmen wir bewusst ein stabiles Modell.
+  const modelId = "gemini-1.5-flash";
 
   let finalPrompt = "";
 
@@ -92,7 +95,7 @@ export const generateRecipe = async (
       config: {
         responseMimeType: "application/json",
         responseSchema: recipeResponseSchema,
-        systemInstruction: "Du bist eine erstklassige Chef-KI. Du adaptierst Rezepte in 3 spezifische Stile: Student (schnell, billig, einfach), Profi (authentisch, hohe Technik, Premium-Zutaten) und Airfryer (optimiert für Heißluft/Geräte). Kategorisiere Zutaten immer konsistent auf Deutsch (z.B. 'Gemüse', 'Fleisch', 'Milchprodukte', 'Vorrat').",
+        systemInstruction: "Du bist eine erstklassige Chef-KI. Du adaptierst Rezepte in 3 spezifische Stile: Student (schnell, billig, einfach), Profi (authentisch, hohe Technik, Premium-Zutaten) und Airfryer (optimiert für Heißluft/Geräte). Kategorisiere Zutaten immer konsistent auf Deutsch (z.B. 'Gemüse', 'Fleisch', 'Milchprodukte', 'Vorrat'). Fülle das Feld 'category' immer aus. Wenn unsicher, nutze 'Sonstiges'.",
       },
     });
 
@@ -101,10 +104,12 @@ export const generateRecipe = async (
 
     const parsedData = JSON.parse(text);
 
+    const normalized: { originalName: string; versions: RecipeVersions } = normalizeRecipeResponse(parsedData);
+
     return {
       recipeId: uuidv4(),
-      originalName: parsedData.originalName,
-      versions: parsedData.versions,
+      originalName: normalized.originalName,
+      versions: normalized.versions,
       sourceType,
       createdAt: Date.now(),
     };
@@ -113,4 +118,49 @@ export const generateRecipe = async (
     console.error("Gemini API Error:", error);
     throw error;
   }
+};
+
+const normalizeRecipeResponse = (data: any): { originalName: string; versions: RecipeVersions } => {
+  if (!data || typeof data !== 'object') {
+    throw new Error('Invalid AI response: not an object');
+  }
+
+  const originalName = typeof data.originalName === 'string' && data.originalName.trim()
+    ? data.originalName.trim()
+    : 'Unbenanntes Gericht';
+
+  const versions = data.versions;
+  if (!versions || typeof versions !== 'object') {
+    throw new Error('Invalid AI response: missing versions');
+  }
+
+  const requiredKeys: Array<keyof RecipeVersions> = ['student', 'profi', 'airfryer'];
+  for (const k of requiredKeys) {
+    if (!versions[k] || typeof versions[k] !== 'object') {
+      throw new Error(`Invalid AI response: missing version '${k}'`);
+    }
+  }
+
+  const normalizeIngredients = (ings: any[]): any[] => {
+    if (!Array.isArray(ings)) return [];
+    return ings.map((ing) => ({
+      ...ing,
+      category: typeof ing?.category === 'string' && ing.category.trim() ? ing.category.trim() : 'Sonstiges',
+    }));
+  };
+
+  const normalizeVersion = (v: any) => ({
+    ...v,
+    ingredients: normalizeIngredients(v?.ingredients),
+    steps: Array.isArray(v?.steps) ? v.steps : [],
+  });
+
+  return {
+    originalName,
+    versions: {
+      student: normalizeVersion(versions.student),
+      profi: normalizeVersion(versions.profi),
+      airfryer: normalizeVersion(versions.airfryer),
+    } as RecipeVersions,
+  };
 };

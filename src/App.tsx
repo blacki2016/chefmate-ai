@@ -163,7 +163,9 @@ const App: React.FC = () => {
       setView('recipe-detail');
       setPrompt('');
     } catch (e) {
-      alert("Fehler beim Erstellen des Rezepts. Bitte versuche es erneut.");
+      console.error('Generate failed:', e);
+      const message = e instanceof Error ? e.message : String(e);
+      alert(`Fehler beim Erstellen des Rezepts: ${message}`);
     } finally {
       setLoading(false);
     }

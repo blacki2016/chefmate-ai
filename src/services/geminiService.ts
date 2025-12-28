@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI, Schema, Type } from "@google/genai";
 import { Recipe, RecipeVersions } from "../types";
 import { v4 as uuidv4 } from 'uuid';
 

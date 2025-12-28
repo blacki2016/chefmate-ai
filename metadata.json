@@ -1,0 +1,8 @@
+{
+  "name": "Copy of ChefMateAI",
+  "description": "AI-Powered Adaptive Recipe App generating Student, Authentic, and Gadget versions of any dish.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}

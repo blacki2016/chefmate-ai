@@ -1,0 +1,7 @@
+{
+  // Verhindert, dass VS Code das Parent-Repo (z.B. /Users/Leo) automatisch öffnet.
+  "git.openRepositoryInParentFolders": "never",
+
+  // Optional: Repo-Erkennung auf Unterordner begrenzen.
+  "git.autoRepositoryDetection": "subFolders"
+}
